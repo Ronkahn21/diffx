@@ -30,7 +30,9 @@ Comments come in two types. A **line comment** is anchored to a specific diff li
     "anchorType": "line",
     "side": "additions",
     "lineNumber": 42,
+    "endLineNumber": 45,
     "lineContent": "const x = tokenize(input)",
+    "lineContents": ["const x = tokenize(input)", "  .filter(Boolean)", "  .map(trim)", ""],
     "body": "Rename x to parsedToken for clarity",
     "status": "open",
     "createdAt": 1234567890,
@@ -63,8 +65,8 @@ For each comment with `"status": "open"`, first determine the intent — is it a
 
 1. Read the file at `filePath`
 2. Locate the relevant text:
-   - **Line comment** (`anchorType === "line"` or missing): use `lineContent` to find the line
-   - **Rendered comment** (`anchorType === "rendered"`): use `renderedAnchor.selectedText` to find the passage; use `renderedAnchor.context` for disambiguation if the text appears multiple times
+   - **Line comment** (`anchorType === "line"` or missing): use `lineContent` to find the line. Single-line comments have `endLineNumber === lineNumber` and `lineContents` is a one-element array. For multi-line comments (`endLineNumber` differs from `lineNumber`), `lineContent` is the first line — use `lineContents` for the full context of all lines covered.
+   - **Rendered comment** (`anchorType === "rendered"`): use `renderedAnchor.selectedText` to find the passage; use `renderedAnchor.context` for disambiguation if the text appears multiple times. If `selectedText` is still ambiguous, `paragraphIndex` (0-based paragraph number in the file) and `startOffset`/`endOffset` (character offsets within that paragraph) give the precise location.
 3. Apply the change described in `body`
 4. Reply to the comment explaining what you did, then mark it as resolved:
 

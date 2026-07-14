@@ -89,6 +89,13 @@ export function useComments() {
     [editMutation],
   )
 
+  const unresolveComment = useCallback(
+    (id: string) => {
+      editMutation.mutate({ id, status: 'open' })
+    },
+    [editMutation],
+  )
+
   const formatAllComments = useCallback((): string => {
     if (comments.length === 0) return ''
 
@@ -135,12 +142,16 @@ export function useComments() {
   const getAnnotationsForFile = useCallback(
     (filePath: string): DiffLineAnnotation<ReviewComment>[] => {
       return comments
-        .filter((c) => c.filePath === filePath && c.anchorType !== 'rendered')
-        .map((c) => ({
-          side: c.side!,
-          lineNumber: c.endLineNumber ?? c.lineNumber!,
-          metadata: c,
-        }))
+        .filter((c) => c.filePath === filePath)
+        .map((c): DiffLineAnnotation<ReviewComment> | null => {
+          if (c.anchorType === 'rendered') {
+            // Show rendered-view comments on their source line in the diff too.
+            const line = c.renderedAnchor?.sourceLine
+            return line ? { side: 'additions', lineNumber: line, metadata: c } : null
+          }
+          return { side: c.side!, lineNumber: c.endLineNumber ?? c.lineNumber!, metadata: c }
+        })
+        .filter((a): a is DiffLineAnnotation<ReviewComment> => a !== null)
     },
     [comments],
   )
@@ -157,6 +168,7 @@ export function useComments() {
     removeComment,
     editComment,
     resolveComment,
+    unresolveComment,
     getAnnotationsForFile,
     formatAllComments,
     copyAllComments,
